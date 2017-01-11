@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          http://www.mrpt.org/                             |
    |                                                                           |
-   | Copyright (c) 2005-2016, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2017, Individual contributors, see AUTHORS file        |
    | See: http://www.mrpt.org/Authors - All rights reserved.                   |
    | Released under BSD License. See details in http://www.mrpt.org/License    |
    +---------------------------------------------------------------------------+ */
@@ -297,6 +297,21 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 		if (! STEP2_SenseObstacles() )
 		{
 			doEmergencyStop("Error while loading and sorting the obstacles. Robot will be stopped.");
+			if (fill_log_record)
+			{
+				CPose2D rel_cur_pose_wrt_last_vel_cmd_NOP, rel_pose_PTG_origin_wrt_sense_NOP;
+				STEP8_GenerateLogRecord(newLogRec,
+					relTarget,
+					-1, // nSelectedPTG,
+					m_robot.getEmergencyStopCmd(),
+					nPTGs,
+					false, //best_is_NOP_cmdvel,
+					rel_cur_pose_wrt_last_vel_cmd_NOP,
+					rel_pose_PTG_origin_wrt_sense_NOP,
+					0, //executionTimeValue,
+					0, //tim_changeSpeed,
+					tim_start_iteration);
+			}
 			return;
 		}
 
@@ -453,6 +468,20 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 			if (!this->changeSpeedsNOP())
 			{
 				doEmergencyStop("\nERROR calling changeSpeedsNOP()!! Stopping robot and finishing navigation\n");
+				if(fill_log_record)
+				{
+					STEP8_GenerateLogRecord(newLogRec,
+						relTarget,
+						nSelectedPTG,
+						m_robot.getEmergencyStopCmd(),
+						nPTGs,
+						best_is_NOP_cmdvel,
+						rel_cur_pose_wrt_last_vel_cmd_NOP,
+						rel_pose_PTG_origin_wrt_sense_NOP,
+						0, //executionTimeValue,
+						0, //tim_changeSpeed,
+						tim_start_iteration);
+				}
 				return;
 			}
 		}
@@ -469,7 +498,9 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 
 			if (!new_vel_cmd /* which means best_PTG_eval==.0*/ || new_vel_cmd->isStopCmd()) {
 				MRPT_LOG_DEBUG("Best velocity command is STOP (no way found), calling robot.stop()");
-				this->stop(true /* emergency */);
+				this->stop(true /* emergency */);  // don't call doEmergencyStop() here since that will stop navigation completely
+				new_vel_cmd = m_robot.getEmergencyStopCmd();
+				m_lastSentVelCmd.reset();
 			}
 			else
 			{
@@ -481,6 +512,21 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 					if (!this->changeSpeeds(*new_vel_cmd))
 					{
 						doEmergencyStop("\nERROR calling changeSpeeds()!! Stopping robot and finishing navigation\n");
+						if (fill_log_record)
+						{
+							new_vel_cmd = m_robot.getEmergencyStopCmd();
+							STEP8_GenerateLogRecord(newLogRec,
+								relTarget,
+								nSelectedPTG,
+								new_vel_cmd,
+								nPTGs,
+								best_is_NOP_cmdvel,
+								rel_cur_pose_wrt_last_vel_cmd_NOP,
+								rel_pose_PTG_origin_wrt_sense_NOP,
+								0, //executionTimeValue,
+								0, //tim_changeSpeed,
+								tim_start_iteration);
+						}
 						return;
 					}
 				}
@@ -533,61 +579,20 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 					nSelectedPTG
 					) );
 		}
-
-		// ---------------------------------------
-		// STEP8: Generate log record
-		// ---------------------------------------
 		if (fill_log_record)
 		{
-			m_timelogger.enter("navigationStep.populate_log_info");
-
-			this->loggingGetWSObstaclesAndShape(newLogRec);
-
-			newLogRec.robotOdometryPose   = m_curPoseVel.pose;
-			newLogRec.WS_target_relative  = TPoint2D(relTarget);
-			newLogRec.nSelectedPTG        = nSelectedPTG;
-			newLogRec.cur_vel             = m_curPoseVel.velGlobal;
-			newLogRec.cur_vel_local       = m_curPoseVel.velLocal;
-			newLogRec.cmd_vel = new_vel_cmd;
-			newLogRec.values["estimatedExecutionPeriod"] = meanExecutionPeriod.getLastOutput();
-			newLogRec.values["executionTime"] = executionTimeValue;
-			newLogRec.values["executionTime_avr"] = meanExecutionTime.getLastOutput();
-			newLogRec.values["time_changeSpeeds()"] = tim_changeSpeed;
-			newLogRec.values["time_changeSpeeds()_avr"] = tim_changeSpeed_avr.getLastOutput();
-			newLogRec.timestamps["tim_start_iteration"] = tim_start_iteration;
-			newLogRec.timestamps["curPoseAndVel"] = m_curPoseVel.timestamp;
-			newLogRec.nPTGs = nPTGs;
-
-			// NOP mode  stuff:
-			newLogRec.rel_cur_pose_wrt_last_vel_cmd_NOP = rel_cur_pose_wrt_last_vel_cmd_NOP;
-			newLogRec.rel_pose_PTG_origin_wrt_sense_NOP = rel_pose_PTG_origin_wrt_sense_NOP;
-			newLogRec.ptg_index_NOP = best_is_NOP_cmdvel ? m_lastSentVelCmd.ptg_index : -1;
-			newLogRec.ptg_last_k_NOP = m_lastSentVelCmd.ptg_alpha_index;
-			newLogRec.ptg_last_curRobotVelLocal = m_lastSentVelCmd.curRobotVelLocal;
-
-			// Last entry in info-per-PTG:
-			{
-				CLogFileRecord::TInfoPerPTG &ipp = *newLogRec.infoPerPTG.rbegin();
-				if (!ipp.HLFR) ipp.HLFR = CLogFileRecord_VFF::Create();
-			}
-
-
-			m_timelogger.leave("navigationStep.populate_log_info");
-
-			//  Save to log file:
-			// --------------------------------------
-			{
-				mrpt::utils::CTimeLoggerEntry tle(m_timelogger,"navigationStep.write_log_file");
-				if (m_logFile) (*m_logFile) << newLogRec;
-			}
-
-			// Set as last log record
-			{
-				mrpt::synch::CCriticalSectionLocker lock_log(&m_critZoneLastLog);    // Lock
-				lastLogRecord = newLogRec; // COPY
-			}
-		} // if (fill_log_record)
-
+			STEP8_GenerateLogRecord(newLogRec,
+				relTarget,
+				nSelectedPTG,
+				new_vel_cmd,
+				nPTGs,
+				best_is_NOP_cmdvel,
+				rel_cur_pose_wrt_last_vel_cmd_NOP,
+				rel_pose_PTG_origin_wrt_sense_NOP,
+				executionTimeValue,
+				tim_changeSpeed,
+				tim_start_iteration);
+		}
 	}
 	catch (std::exception &e) {
 		doEmergencyStop(std::string("[CAbstractPTGBasedReactive::performNavigationStep] Stopping robot and finishing navigation due to exception:\n") + std::string(e.what()));
@@ -597,9 +602,63 @@ void CAbstractPTGBasedReactive::performNavigationStep()
 	}
 }
 
+
+void CAbstractPTGBasedReactive::STEP8_GenerateLogRecord(CLogFileRecord &newLogRec,const TPose2D& relTarget,int nSelectedPTG, const mrpt::kinematics::CVehicleVelCmdPtr &new_vel_cmd, const int nPTGs, const bool best_is_NOP_cmdvel, const mrpt::poses::CPose2D &rel_cur_pose_wrt_last_vel_cmd_NOP, const mrpt::poses::CPose2D &rel_pose_PTG_origin_wrt_sense_NOP, const double executionTimeValue, const double tim_changeSpeed, const mrpt::system::TTimeStamp &tim_start_iteration)
+{
+	// ---------------------------------------
+	// STEP8: Generate log record
+	// ---------------------------------------
+	m_timelogger.enter("navigationStep.populate_log_info");
+
+	this->loggingGetWSObstaclesAndShape(newLogRec);
+
+	newLogRec.robotOdometryPose   = m_curPoseVel.pose;
+	newLogRec.WS_target_relative  = TPoint2D(relTarget);
+	newLogRec.nSelectedPTG        = nSelectedPTG;
+	newLogRec.cur_vel             = m_curPoseVel.velGlobal;
+	newLogRec.cur_vel_local       = m_curPoseVel.velLocal;
+	newLogRec.cmd_vel = new_vel_cmd;
+	newLogRec.values["estimatedExecutionPeriod"] = meanExecutionPeriod.getLastOutput();
+	newLogRec.values["executionTime"] = executionTimeValue;
+	newLogRec.values["executionTime_avr"] = meanExecutionTime.getLastOutput();
+	newLogRec.values["time_changeSpeeds()"] = tim_changeSpeed;
+	newLogRec.values["time_changeSpeeds()_avr"] = tim_changeSpeed_avr.getLastOutput();
+	newLogRec.timestamps["tim_start_iteration"] = tim_start_iteration;
+	newLogRec.timestamps["curPoseAndVel"] = m_curPoseVel.timestamp;
+	newLogRec.nPTGs = nPTGs;
+
+	// NOP mode  stuff:
+	newLogRec.rel_cur_pose_wrt_last_vel_cmd_NOP = rel_cur_pose_wrt_last_vel_cmd_NOP;
+	newLogRec.rel_pose_PTG_origin_wrt_sense_NOP = rel_pose_PTG_origin_wrt_sense_NOP;
+	newLogRec.ptg_index_NOP = best_is_NOP_cmdvel ? m_lastSentVelCmd.ptg_index : -1;
+	newLogRec.ptg_last_k_NOP = m_lastSentVelCmd.ptg_alpha_index;
+	newLogRec.ptg_last_curRobotVelLocal = m_lastSentVelCmd.curRobotVelLocal;
+
+	// Last entry in info-per-PTG:
+	{
+		CLogFileRecord::TInfoPerPTG &ipp = *newLogRec.infoPerPTG.rbegin();
+		if (!ipp.HLFR) ipp.HLFR = CLogFileRecord_VFF::Create();
+	}
+
+	m_timelogger.leave("navigationStep.populate_log_info");
+
+	//  Save to log file:
+	// --------------------------------------
+	{
+		mrpt::utils::CTimeLoggerEntry tle(m_timelogger,"navigationStep.write_log_file");
+		if (m_logFile) (*m_logFile) << newLogRec;
+	}
+	// Set as last log record
+	{
+		mrpt::synch::CCriticalSectionLocker lock_log(&m_critZoneLastLog);    // Lock
+		lastLogRecord = newLogRec; // COPY
+	}
+}
+
 void CAbstractPTGBasedReactive::STEP5_PTGEvaluator(
 	THolonomicMovement         & holonomicMovement,
 	const std::vector<double>        & in_TPObstacles,
+	const mrpt::nav::ClearanceDiagram & in_clearance,
 	const mrpt::math::TPose2D  & WS_Target,
 	const mrpt::math::TPoint2D & TP_Target,
 	CLogFileRecord::TInfoPerPTG & log,
@@ -733,15 +792,9 @@ void CAbstractPTGBasedReactive::STEP5_PTGEvaluator(
 		}
 	}
 
-	// Factor6: free space
+	// Factor6: clearance
 	// -----------------------------------------------------
-	float aver_obs = 0;
-	for (size_t i=0; i<in_TPObstacles.size(); i++)
-		aver_obs += in_TPObstacles[i];
-
-	aver_obs = aver_obs/in_TPObstacles.size();
-
-	eval_factors[5] = aver_obs;
+	eval_factors[5] = in_clearance.getClearance(kDirection, TargetDist*1.01 );
 
 	//  SAVE LOG
 	log.evalFactors.resize(eval_factors.size());
@@ -1019,7 +1072,8 @@ void CAbstractPTGBasedReactive::ptg_eval_target_build_obstacles(
 			ptg->initTPObstacles(ipf.TP_Obstacles);
 
 			// Implementation-dependent conversion:
-			STEP3_WSpaceToTPSpace(indexPTG, ipf.TP_Obstacles, -rel_pose_PTG_origin_wrt_sense);
+			STEP3_WSpaceToTPSpace(indexPTG, ipf.TP_Obstacles, ipf.clearance, -rel_pose_PTG_origin_wrt_sense);
+			ptg->updateClearancePost(ipf.clearance, ipf.TP_Obstacles);
 
 			// Distances in TP-Space are normalized to [0,1]:
 			const double _refD = 1.0 / ptg->getRefDistance();
@@ -1046,7 +1100,8 @@ void CAbstractPTGBasedReactive::ptg_eval_target_build_obstacles(
 					holonomicMovement.direction,
 					holonomicMovement.speed,
 					HLFR,
-					1.0 /* max obstacle dist*/);
+					1.0 /* max obstacle dist*/,
+					&ipf.clearance);
 
 			// Security: Scale down the velocity when heading towards obstacles,
 			//  such that it's assured that we never go thru an obstacle!
@@ -1091,6 +1146,7 @@ void CAbstractPTGBasedReactive::ptg_eval_target_build_obstacles(
 			STEP5_PTGEvaluator(
 				holonomicMovement,
 				ipf.TP_Obstacles,
+				ipf.clearance,
 				relTarget,
 				ipf.TP_Target,
 				newLogRec.infoPerPTG[idx_in_log_infoPerPTGs], newLogRec,
@@ -1105,12 +1161,13 @@ void CAbstractPTGBasedReactive::ptg_eval_target_build_obstacles(
 	const bool fill_log_record = (m_logFile != NULL || m_enableKeepLogRecords);
 	if (fill_log_record)
 	{
-		metaprogramming::copy_container_typecasting(ipf.TP_Obstacles, newLogRec.infoPerPTG[idx_in_log_infoPerPTGs].TP_Obstacles);
 		CLogFileRecord::TInfoPerPTG &ipp = newLogRec.infoPerPTG[idx_in_log_infoPerPTGs];
 		if (!this_is_PTG_continuation)
 		     ipp.PTG_desc = ptg->getDescription();
 		else ipp.PTG_desc = mrpt::format("NOP cmdvel (prev PTG idx=%u)", static_cast<unsigned int>(m_lastSentVelCmd.ptg_index) );
 
+		metaprogramming::copy_container_typecasting(ipf.TP_Obstacles, ipp.TP_Obstacles);
+		ipp.clearance = ipf.clearance;
 		ipp.TP_Target = ipf.TP_Target;
 		ipp.HLFR = HLFR;
 		ipp.desiredDirection = holonomicMovement.direction;

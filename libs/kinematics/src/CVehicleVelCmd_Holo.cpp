@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          http://www.mrpt.org/                             |
    |                                                                           |
-   | Copyright (c) 2005-2016, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2017, Individual contributors, see AUTHORS file        |
    | See: http://www.mrpt.org/Authors - All rights reserved.                   |
    | Released under BSD License. See details in http://www.mrpt.org/License    |
    +---------------------------------------------------------------------------+ */
@@ -23,6 +23,15 @@ CVehicleVelCmd_Holo::CVehicleVelCmd_Holo() :
 	rot_speed(.0)
 {
 }
+
+CVehicleVelCmd_Holo::CVehicleVelCmd_Holo(double vel, double dir_local, double ramp_time, double rot_speed) :
+	vel(vel),
+	dir_local(dir_local),
+	ramp_time(ramp_time),
+	rot_speed(rot_speed)
+{
+}
+
 CVehicleVelCmd_Holo::~CVehicleVelCmd_Holo()
 {
 }

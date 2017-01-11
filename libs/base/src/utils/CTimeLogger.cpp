@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          http://www.mrpt.org/                             |
    |                                                                           |
-   | Copyright (c) 2005-2016, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2017, Individual contributors, see AUTHORS file        |
    | See: http://www.mrpt.org/Authors - All rights reserved.                   |
    | Released under BSD License. See details in http://www.mrpt.org/License    |
    +---------------------------------------------------------------------------+ */
@@ -50,6 +50,40 @@ CTimeLogger::~CTimeLogger()
     if (!m_data.empty()) // If logging is disabled, do nothing...
         dumpAllStats();
 }
+
+CTimeLogger::CTimeLogger(const CTimeLogger&o) :
+	COutputLogger(o),
+	m_enabled(o.m_enabled),
+	m_name(o.m_name),
+	m_data(o.m_data)
+{
+}
+CTimeLogger &CTimeLogger::operator =(const CTimeLogger&o)
+{
+	COutputLogger::operator=(o);
+	m_enabled = o.m_enabled;
+	m_name = o.m_name;
+	m_data = o.m_data;
+	return *this;
+}
+#if MRPT_HAS_CXX11
+CTimeLogger::CTimeLogger(CTimeLogger&&o) :
+	COutputLogger(o),
+	m_enabled(o.m_enabled),
+	m_name(o.m_name),
+	m_data(o.m_data)
+{
+}
+CTimeLogger &CTimeLogger::operator =(CTimeLogger&&o)
+{
+	COutputLogger::operator=(o);
+	m_enabled = o.m_enabled;
+	m_name = o.m_name;
+	m_data = o.m_data;
+	return *this;
+}
+#endif
+
 
 void CTimeLogger::clear(bool deep_clear)
 {

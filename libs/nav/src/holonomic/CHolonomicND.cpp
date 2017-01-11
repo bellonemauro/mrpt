@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          http://www.mrpt.org/                             |
    |                                                                           |
-   | Copyright (c) 2005-2016, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2017, Individual contributors, see AUTHORS file        |
    | See: http://www.mrpt.org/Authors - All rights reserved.                   |
    | Released under BSD License. See details in http://www.mrpt.org/License    |
    +---------------------------------------------------------------------------+ */
@@ -50,7 +50,8 @@ void  CHolonomicND::navigate(
 	double			&desiredDirection,
 	double			&desiredSpeed,
 	CHolonomicLogFileRecordPtr &logRecord,
-	const double    max_obstacle_dist)
+	const double    max_obstacle_dist,
+	const mrpt::nav::ClearanceDiagram *clearance)
 {
 	TGapArray			gaps;
 	TSituations			situation;

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          http://www.mrpt.org/                             |
    |                                                                           |
-   | Copyright (c) 2005-2016, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2017, Individual contributors, see AUTHORS file        |
    | See: http://www.mrpt.org/Authors - All rights reserved.                   |
    | Released under BSD License. See details in http://www.mrpt.org/License    |
    +---------------------------------------------------------------------------+ */
@@ -77,6 +77,16 @@ namespace mrpt
 		 * \return false on any error.
 		 */
 		virtual bool stop(bool isEmergencyStop=true) = 0;
+
+		/** Gets the emergency stop command for the current robot
+		  * \return the emergency stop command
+		  */
+		virtual mrpt::kinematics::CVehicleVelCmdPtr getEmergencyStopCmd() = 0;
+
+		/** Gets the emergency stop command for the current robot
+		  * \return the emergency stop command
+		  */
+		virtual mrpt::kinematics::CVehicleVelCmdPtr getStopCmd() = 0;
 
 		/** Start the watchdog timer of the robot platform, if any, for maximum expected delay between consecutive calls to changeSpeeds().
 		 * \param T_ms Period, in ms.
