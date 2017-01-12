@@ -103,6 +103,26 @@ namespace kinematics
 		mrpt::math::TTwist2D  m_GT_vel;   //!< Velocity in (x,y,omega)
 		mrpt::math::TTwist2D  m_odometric_vel;   //!< Velocity in (x,y,omega)
 		mrpt::math::TPose2D   m_odometry;
+
+        // this structures are thought for an articulated vehicle
+        // the state vector is extended to add an additional DoF alpha in the acticulation
+        struct ArtOdometry  //!< Velocity in (x,y,phi,alpha)
+        {
+            double x,y; //!< Pose components: X,Y (m)
+            double phi,alpha; //!< Angular componennts (rad)
+            //!< Articulation angle derivative
+        };
+        ArtOdometry m_art_odometry;  //!Velocity in (x,y,omega, alpha)
+
+        struct ArtOdometricVel  //!< Velocity in (x,y,omega,alpha_dot)
+        {
+            double vx,vy; //!< Velocity components: X,Y (m/s)
+            double omega,alpha_dot; //!< Angular velocity (rad/s)
+            //!< Articulation angle derivative
+        };
+        ArtOdometricVel m_art_odometric_vel;  //!Velocity in (x,y,omega, alpha)
+
+
 		/** @} */
 		double m_firmware_control_period;  //!< The period at which the low-level controller updates velocities (Default: 0.5 ms)
 
