@@ -56,8 +56,8 @@ void CVehicleSimul_DiffDriven_Art::internal_simulControlStep(const double AAt)
 	}
 
 	// Local to global frame:
-    m_art_odometric_vel.vx   = cos(m_art_odometry.phi) * m_v;
-    m_art_odometric_vel.vy   = sin(m_art_odometry.phi) * m_v;
+    m_art_odometric_vel.vx   = cos(m_art_odometry.theta) * m_v;
+    m_art_odometric_vel.vy   = sin(m_art_odometry.theta) * m_v;
     m_art_odometric_vel.omega = m_w;
     m_art_odometric_vel.alpha_dot = -(m_v/m_trailer_length) * sin(m_art_odometry.alpha)
                                     -(m_tt_length/m_trailer_length) * m_w * cos(m_art_odometry.alpha) - m_w;

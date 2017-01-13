@@ -16,6 +16,9 @@ namespace kinematics
 {
 	DEFINE_SERIALIZABLE_PRE_CUSTOM_BASE_LINKAGE(CVehicleVelCmd_DiffDriven_Art, CVehicleVelCmd, KINEMATICS_IMPEXP)
 
+
+
+
     /** Kinematic model for Ackermann-like or differential-driven vehicles with articulation.
      *
      * Geometry of the vehicle is :
@@ -39,7 +42,7 @@ namespace kinematics
 		double lin_vel; //!< Linear velocity (m/s)      //this are already included in CVehicleVelCmd_DiffDriven
 		double ang_vel; //!< Angular velocity (rad/s)
 
-		CVehicleVelCmd_DiffDriven_Art();  
+        CVehicleVelCmd_DiffDriven_Art();
 		virtual ~CVehicleVelCmd_DiffDriven_Art();
 
 		size_t getVelCmdLength() const MRPT_OVERRIDE;
