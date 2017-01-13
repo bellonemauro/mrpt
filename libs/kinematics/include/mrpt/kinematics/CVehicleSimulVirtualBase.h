@@ -110,7 +110,7 @@ namespace kinematics
         {
             double x,y; //!< Pose components: X,Y (m)
             double phi,alpha; //!< Angular componennts (rad)
-            //!< Articulation angle derivative
+            //!< Articulation angle
         };
         ArtOdometry m_art_odometry;  //!Velocity in (x,y,omega, alpha)
 

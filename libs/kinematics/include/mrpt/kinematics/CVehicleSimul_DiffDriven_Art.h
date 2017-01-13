@@ -15,9 +15,9 @@ namespace mrpt
 {
 namespace kinematics
 {
-    /** Simulates the kinematics of a differential-driven planar mobile robot/vehicle,
-     * including odometry errors and dynamics limitations.
-	 *
+    /** Simulates the kinematics of a differential-driven planar mobile robot/vehicle
+     * with articulation angle, including odometry errors and dynamics limitations.
+     *
 	 * \ingroup mrpt_kinematics_grp
 	 */
 	class KINEMATICS_IMPEXP CVehicleSimul_DiffDriven_Art : public CVehicleSimulVirtualBase
@@ -25,9 +25,9 @@ namespace kinematics
 	public:
 		typedef CVehicleVelCmd_DiffDriven_Art  kinematic_cmd_t;
 
-        double tractor_length; //!< length of the tractor
-        double trailer_length; //!< length of the trailer
-        double tt_connection_length; //!< length of the tractor-trailer connection
+        double m_tractor_length; //!< length of the tractor
+        double m_trailer_length; //!< length of the trailer
+        double m_tt_length; //!< length of the tractor-trailer connection
 
         CVehicleSimul_DiffDriven_Art();
 		virtual ~CVehicleSimul_DiffDriven_Art();
@@ -38,8 +38,10 @@ namespace kinematics
 			cDELAY = CMD_delay_sec;
 		}
 
+        /** Note: the linear velocity is in the rear axle of the tractor */
 		void setV(double v) { m_v=v; }
-		void setW(double w) { m_w=w; }
+        /** Note: the angular velocity is considered on the tractor */
+        void setW(double w) { m_w=w; }
 
 		double getV() {return m_v;}
 		double getW() {return m_w;}

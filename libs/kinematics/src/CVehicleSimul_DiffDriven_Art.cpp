@@ -15,9 +15,9 @@ using namespace mrpt::kinematics;
 
 
 CVehicleSimul_DiffDriven_Art::CVehicleSimul_DiffDriven_Art() :
-    tractor_length(1), // default value, bring this to setable parameters
-    trailer_length(5),  // default value, bring this to setable parameters
-    tt_connection_length(0),  // default value, bring this to setable parameters
+    m_tractor_length(1), // default value, bring this to setable parameters
+    m_trailer_length(5),  // default value, bring this to setable parameters
+    m_tt_length(0),  // default value, bring this to setable parameters
     cTAU(.0),
     cDELAY(.0)
 {
@@ -59,7 +59,8 @@ void CVehicleSimul_DiffDriven_Art::internal_simulControlStep(const double AAt)
     m_art_odometric_vel.vx   = cos(m_art_odometry.phi) * m_v;
     m_art_odometric_vel.vy   = sin(m_art_odometry.phi) * m_v;
     m_art_odometric_vel.omega = m_w;
-    m_art_odometric_vel.alpha_dot = -(m_v/trailer_length);
+    m_art_odometric_vel.alpha_dot = -(m_v/m_trailer_length) * sin(m_art_odometry.alpha)
+                                    -(m_tt_length/m_trailer_length) * m_w * cos(m_art_odometry.alpha) - m_w;
 
 }
 

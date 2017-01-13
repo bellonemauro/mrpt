@@ -104,11 +104,13 @@ void CVehicleVelCmd_DiffDriven_Art::cmdVel_scale(double vel_scale)
     ang_vel *= vel_scale;
 }
 
-void CVehicleVelCmd_DiffDriven_Art::cmdVel_limits(const mrpt::kinematics::CVehicleVelCmd &prev_vel_cmd, const double beta, const TVelCmdParams &params)
+void CVehicleVelCmd_DiffDriven_Art::cmdVel_limits(const mrpt::kinematics::CVehicleVelCmd &prev_vel_cmd,
+                                                  const double beta, const TVelCmdParams &params)
 {
     ASSERT_(params.robotMax_V_mps>0);
     ASSERT_(params.robotMax_W_radps>0);
-    const mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art *prevcmd = dynamic_cast<const mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art*>(&prev_vel_cmd);
+    const mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art *prevcmd =
+            dynamic_cast<const mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art*>(&prev_vel_cmd);
     ASSERTMSG_(prevcmd, "Expected prevcmd of type `CVehicleVelCmd_DiffDriven`");
     filter_max_vw(lin_vel, ang_vel, params);
     if (std::abs(lin_vel) < 0.01) // i.e. new behavior is nearly a pure rotation
