@@ -11,6 +11,7 @@
 #define MRPT_MACROS_H
 
 #include <mrpt/base/link_pragmas.h>
+#include <mrpt/system/filesystem.h>  //ASSERT_FILE_EXISTS_ does not find the header
 #include <sstream> // ostringstream
 #include <stdexcept> // logic_error
 
