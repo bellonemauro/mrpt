@@ -43,7 +43,6 @@ namespace kinematics
 		/** Brute-force move robot to target coordinates ("teleport") */
 		void setCurrentGTPose(const mrpt::math::TPose2D  &pose);
 
-
 		/** Returns the current pose according to (noisy) odometry \sa setOdometryErrors */
 		const mrpt::math::TPose2D  & getCurrentOdometricPose() const { return m_odometry; }
 		/** Brute-force overwrite robot odometry  */
@@ -101,31 +100,47 @@ namespace kinematics
          */
         struct KINEMATICS_IMPEXP TArtKinematicPose
         {
-            double x,y; //!< Pose components: X,Y (m)
-            double theta,alpha; //!< Angular componennts (rad)
+            mrpt::math::TPose2D tractor_pose;
+            double alpha; //!< Articulation angle (rad)
+            //double x,y; //!< Pose components: X,Y (m)
+            //double theta,alpha; //!< Angular components (rad)
             //!< Articulation angle
 
         };
         struct KINEMATICS_IMPEXP TArtKinematicTwist
         {
-            double vx,vy; //!< Pose components: X,Y (m)
-            double omega,alpha_dot; //!< Angular componennts (rad)
-            //!< Articulation angle
+            mrpt::math::TTwist2D tractor_vel;
+            double alpha_dot; //!< Articulation angular velocity
+            //double vx,vy; //!< Velocity components: X,Y (m/s)
+            //double omega,alpha_dot; //!< Angular velocity components (rad/s)
+
         };
 
 		/** @} */
+
+        /** Overload to support articulated vehicles with differential driven tractor
+          * Returns the instantaneous, ground truth pose in world coordinates
+            including the articulation angle */
+        const mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicPose  & getCurrentArtGTPose() const { return m_art_GT_pose; }
+        /** Brute-force move robot to target coordinates ("teleport") */
+        void setCurrentArtGTPose(const mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicPose  &pose);
+
+        /** Returns the instantaneous, ground truth velocity vector (vx,vy,omega) in world coordinates */
+        const mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicTwist & getCurrentArtGTVel() const { return m_art_GT_vel; }
 
 	protected:
 		/** @name State vector
 		 *  @{ */
 		double                m_time;  //!< simulation running time
 		mrpt::math::TPose2D   m_GT_pose;  //!< ground truth pose in world coordinates.
-		mrpt::math::TTwist2D  m_GT_vel;   //!< Velocity in (x,y,omega)
-		mrpt::math::TTwist2D  m_odometric_vel;   //!< Velocity in (x,y,omega)
-		mrpt::math::TPose2D   m_odometry;
+        mrpt::math::TTwist2D  m_GT_vel;   //!< Velocity in (vx,vy,omega)
+        mrpt::math::TPose2D   m_odometry; //!< Odometric pose (x,y,phi)
+        mrpt::math::TTwist2D  m_odometric_vel;   //!< Velocity in (vx,vy,omega)
 
-        TArtKinematicPose m_art_odometry;  //!Velocity in (x,y,omega, alpha)
-        TArtKinematicTwist m_art_odometric_vel;  //!Velocity in (x,y,omega, alpha)
+        TArtKinematicPose m_art_GT_pose;  //!Ground truth pose in (x,y,phi, alpha)
+        TArtKinematicTwist m_art_GT_vel;  //!Groung truth Velocity in (vx,vy,omega, alpha_dot)
+        TArtKinematicPose m_art_odometry;  //!Odometric Pose in (x,y,phi, alpha)
+        TArtKinematicTwist m_art_odometric_vel;  //!Odometric Velocity in (vx,vy,omega, alpha_dot)
 
 		/** @} */
 		double m_firmware_control_period;  //!< The period at which the low-level controller updates velocities (Default: 0.5 ms)

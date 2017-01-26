@@ -29,6 +29,11 @@ void CVehicleSimulVirtualBase::setCurrentGTPose(const mrpt::math::TPose2D  &pose
 	m_GT_pose=pose;
 }
 
+void CVehicleSimulVirtualBase::setCurrentArtGTPose(const mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicPose  &pose)
+{
+    m_art_GT_pose=pose;
+}
+
 void CVehicleSimulVirtualBase::simulateOneTimeStep(const double dt)
 {
 	using mrpt::math::TPose2D;

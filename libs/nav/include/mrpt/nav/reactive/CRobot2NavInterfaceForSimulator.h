@@ -11,6 +11,7 @@
 #include <mrpt/nav/reactive/CRobot2NavInterface.h>
 #include <mrpt/kinematics/CVehicleSimul_Holo.h>
 #include <mrpt/kinematics/CVehicleSimul_DiffDriven.h>
+#include <mrpt/kinematics/CVehicleSimul_DiffDriven_Art.h>
 
 namespace mrpt
 {
@@ -130,6 +131,67 @@ namespace mrpt
 			m_simul_time_start = m_simul.getTime();
 		}
 	};
+
+    /** CRobot2NavInterface implemented for a simulator object based on mrpt::kinematics::CVehicleSimul_DiffDriven
+      * Only `senseObstacles()` remains virtual for the user to implement it.
+      *
+      * \sa CReactiveNavigationSystem, CAbstractNavigator, mrpt::kinematics::CVehicleSimulVirtualBase
+      *  \ingroup nav_reactive
+      */
+    class NAV_IMPEXP CRobot2NavInterfaceForSimulator_DiffDriven_art : public CRobot2NavInterface
+    {
+    private:
+        mrpt::kinematics::CVehicleSimul_DiffDriven_Art & m_simul;
+        double m_simul_time_start; //!< for getNavigationTime
+
+    public:
+        CRobot2NavInterfaceForSimulator_DiffDriven_art(mrpt::kinematics::CVehicleSimul_DiffDriven_Art &simul) : m_simul(simul),m_simul_time_start(.0) {}
+
+        bool getCurrentPoseAndSpeeds(mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicPose &curPose,
+                                     mrpt::kinematics::CVehicleSimulVirtualBase::TArtKinematicTwist &curVel, mrpt::system::TTimeStamp &timestamp) //MRPT_OVERRIDE  //this does not override anymore as I have redefined the pose and vel
+        {
+            curPose = m_simul.getCurrentArtGTPose();
+            curVel  = m_simul.getCurrentArtGTVel();
+            timestamp = mrpt::system::now();
+            return true; // ok
+        }
+
+
+        bool changeSpeeds(const mrpt::kinematics::CVehicleVelCmd &vel_cmd) MRPT_OVERRIDE
+        {
+            m_simul.sendVelCmd(vel_cmd);
+            return true; // ok
+        }
+
+        bool stop(bool isEmergencyStop) MRPT_OVERRIDE
+        {
+            mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art cmd;
+            cmd.setToStop();
+            m_simul.sendVelCmd(cmd);
+            return true;
+        }
+
+
+        mrpt::kinematics::CVehicleVelCmdPtr getStopCmd() MRPT_OVERRIDE
+        {
+            mrpt::kinematics::CVehicleVelCmdPtr cmd(new mrpt::kinematics::CVehicleVelCmd_DiffDriven_Art());
+            cmd->setToStop();
+            return cmd;
+        }
+        mrpt::kinematics::CVehicleVelCmdPtr getEmergencyStopCmd() MRPT_OVERRIDE
+        {
+            return getStopCmd();
+        }
+
+        /** See CRobot2NavInterface::getNavigationTime(). In this class, simulation time is returned instead of wall-clock time. */
+        double getNavigationTime() MRPT_OVERRIDE {
+            return m_simul.getTime()-m_simul_time_start;
+        }
+        /** See CRobot2NavInterface::resetNavigationTimer() */
+        void resetNavigationTimer() MRPT_OVERRIDE {
+            m_simul_time_start = m_simul.getTime();
+        }
+    };
 
   }
 }
